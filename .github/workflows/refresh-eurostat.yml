@@ -1,0 +1,29 @@
+# GitHub-Action fuer das Daten-Repo "stats-data" — TAEGLICHER Refresh der Eurostat-Kennzahlen (Daten monatlich, Pruefung taeglich).
+# Legt in `.github/workflows/refresh-eurostat.yml` des Daten-Repos. Eurostat liefert monatliche Reihen
+# (HVPI, Arbeitslosenquote) -> taeglicher Cron. Committet `eurostat-stats.json`; das Eurostat-Widget
+# holt sie clientseitig (cache:"no-store") mit gebackenem Fallback. S. _assets/stats-github/README.md.
+name: refresh-eurostat
+on:
+  schedule:
+    - cron: "0 4 * * *"       # taeglich 04:00 UTC (committet nur bei echter Aenderung)
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # eurostat-widget.py liegt (als Kopie) im Daten-Repo — s. README, Schritt 2.
+      - name: Eurostat-Daten backen
+        run: python eurostat-widget.py --emit-json eurostat-stats.json
+      - name: Committen, falls geaendert
+        run: |
+          git config user.name  "stats-bot"
+          git config user.email "stats-bot@users.noreply.github.com"
+          git add eurostat-stats.json
+          git diff --cached --quiet || git commit -m "auto: Eurostat-Statistik aktualisiert (monatlich)"
+          git push
