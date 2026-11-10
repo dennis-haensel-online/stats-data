@@ -37,6 +37,7 @@ CACHE = HERE / "ezb-wechselkurs-cache.json"
 TEMPLATE = HERE / "ezb-wechselkurs-template.html"
 API = "https://data-api.ecb.europa.eu/service/data/EXR/{freq}..EUR.SP00.A?format=csvdata&{q}"
 PORTAL = "https://data.ecb.europa.eu/data/datasets/EXR"
+METHOD = "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
 START = "1999-01"
 # Oeffentliches Daten-Repo des Live-Layers (dasselbe wie eurostat-widget.py). Leer => nur gebacken.
 GITHUB_STATS_REPO = "dennis-haensel-online/stats-data"
@@ -188,13 +189,19 @@ UI = {
         title="The euro against the world's currencies",
         sub="ECB euro reference rates, monthly averages since January 1999 (the start of the euro). "
             "Pick the currencies, the period and the quotation.",
+        kind="<strong>Which rate is this?</strong> A <strong>mid-rate</strong> (Mittelkurs): the ECB euro reference "
+             "rate is the average of the buying and selling rates on the spot market — so it is <strong>neither a bid "
+             "rate (Geldkurs) nor an ask rate (Briefkurs)</strong>. Central banks agree on it every working day at about "
+             "14:10 CET, the ECB publishes it at about 16:00 CET, for information only. The chart shows the "
+             "<strong>monthly averages</strong> of these daily rates, the table also the latest daily rate. A bank that "
+             "changes money for you charges its own bid and ask rates around this mid-rate.",
         qLab="Quotation", qInd="Indirect quotation (Mengennotierung)", qDir="Direct quotation (Preisnotierung)",
         qIndEx="€1 = … foreign currency", qDirEx="1 foreign unit = … €",
         pLab="Period", from_="from", to="to", max="since 1999",
         vLab="Show", vRate="Exchange rate", vIdx="Index (start of period = 100)",
         cLab="Currencies", cHint="Tick a currency in the table to add it to the chart (up to 8).",
         gLive="ECB reference rates", gEnded="Series ended", gEuro="Replaced by the euro",
-        thCur="Currency", thToday="Latest daily rate", thStart="Start of period", thEnd="End of period",
+        thCur="Currency", thToday="Latest reference rate (mid-rate)", thStart="Start of period", thEnd="End of period",
         thChg="Change of the quoted rate", thEuro="The euro …",
         up="appreciated", down="depreciated", flat="unchanged",
         noData="no data in this period", tooMany="At most 8 currencies at a time — untick one first.",
@@ -222,21 +229,27 @@ UI = {
         ],
         foot="Source: European Central Bank (ECB), euro foreign exchange reference rates, dataset EXR — monthly "
              "averages (series EXR.M.&lt;currency&gt;.EUR.SP00.A) and the latest daily reference rate "
-             "(EXR.D.…). Retrieved {fetched}: <a href=\"{portal}\">{portal}</a>. The ECB publishes these rates for "
-             "information only; banks buy and sell at their own bid and ask rates. Real figures belong to the "
+             "(EXR.D.…). Retrieved {fetched}: <a href=\"{portal}\">{portal}</a>. How the ECB sets the rates (mid-rates, "
+             "concertation procedure, for information only): <a href=\"{method}\">{method}</a>. Real figures belong to the "
              "HTML layer of this course — the printed worksheets stay timeless.",
     ),
     "de": dict(
         title="Der Euro gegenüber den Währungen der Welt",
         sub="Euro-Referenzkurse der EZB, Monatsdurchschnitte seit Januar 1999 (Start des Euro). "
             "Wählen Sie Währungen, Zeitraum und Notierung.",
+        kind="<strong>Welcher Kurs ist das?</strong> Ein <strong>Mittelkurs</strong>: Der Euro-Referenzkurs der EZB ist "
+             "der Durchschnitt aus Kauf- und Verkaufskursen am Kassamarkt (Devisenkassamittelkurs) — also <strong>weder "
+             "Geldkurs noch Briefkurs</strong>. Die Zentralbanken stimmen ihn an jedem Arbeitstag gegen 14:10 Uhr MEZ ab, "
+             "die EZB veröffentlicht ihn gegen 16:00 Uhr MEZ, nur zur Information. Das Diagramm zeigt die "
+             "<strong>Monatsdurchschnitte</strong> dieser Tageskurse, die Tabelle zusätzlich den letzten Tageskurs. Eine "
+             "Bank, die für Sie Geld wechselt, rechnet mit eigenen Geld- und Briefkursen rund um diesen Mittelkurs.",
         qLab="Notierung", qInd="Mengennotierung", qDir="Preisnotierung",
         qIndEx="1 € = … Fremdwährung", qDirEx="1 Fremdwährungseinheit = … €",
         pLab="Zeitraum", from_="von", to="bis", max="seit 1999",
         vLab="Anzeige", vRate="Wechselkurs", vIdx="Index (Periodenbeginn = 100)",
         cLab="Währungen", cHint="Haken Sie eine Währung in der Tabelle an, um sie ins Diagramm zu holen (bis zu 8).",
         gLive="EZB-Referenzkurse", gEnded="Reihe eingestellt", gEuro="Durch den Euro ersetzt",
-        thCur="Währung", thToday="Letzter Tageskurs", thStart="Periodenbeginn", thEnd="Periodenende",
+        thCur="Währung", thToday="Letzter Referenzkurs (Mittelkurs)", thStart="Periodenbeginn", thEnd="Periodenende",
         thChg="Änderung des notierten Kurses", thEuro="Der Euro …",
         up="hat aufgewertet", down="hat abgewertet", flat="unverändert",
         noData="keine Daten im Zeitraum", tooMany="Höchstens 8 Währungen gleichzeitig — bitte erst eine abwählen.",
@@ -264,8 +277,8 @@ UI = {
         ],
         foot="Quelle: Europäische Zentralbank (EZB), Euro-Referenzkurse, Datensatz EXR — Monatsdurchschnitte "
              "(Reihen EXR.M.&lt;Währung&gt;.EUR.SP00.A) und letzter Tages-Referenzkurs (EXR.D.…). Abgerufen am "
-             "{fetched}: <a href=\"{portal}\">{portal}</a>. Die EZB veröffentlicht die Kurse nur zur Information; "
-             "Banken kaufen und verkaufen zu eigenen Geld- und Briefkursen. Reale Zahlen gehören in die "
+             "{fetched}: <a href=\"{portal}\">{portal}</a>. So legt die EZB die Kurse fest (Mittelkurse, "
+             "Konzertierungsverfahren, nur zur Information): <a href=\"{method}\">{method}</a>. Reale Zahlen gehören in die "
              "HTML-Schicht — die gedruckten Arbeitsblätter bleiben zeitlos.",
     ),
 }
@@ -281,7 +294,7 @@ def bake(data, lang):
             continue
         cur[c] = dict(comp[c], n=meta[li], r=meta[2 + li], g=meta[4], note=meta[5 + li],
                       u=_unit(list(data["series"][c].values())), last=data["last"].get(c))
-    ui["foot"] = ui["foot"].format(fetched="__FETCHED__", portal=PORTAL)   # Datum setzt das JS (auch live)
+    ui["foot"] = ui["foot"].format(fetched="__FETCHED__", portal=PORTAL, method=METHOD)   # Datum setzt das JS (auch live)
     live = (f"https://raw.githubusercontent.com/{GITHUB_STATS_REPO}/main/{LIVE_FILE}"
             if GITHUB_STATS_REPO else "")
     payload = {"fetched": data["fetched"], "months": data["months"], "cur": cur, "def": DEFAULT,
