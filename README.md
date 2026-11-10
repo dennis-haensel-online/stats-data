@@ -50,3 +50,15 @@ Muster (gebacken + optionaler Live-Fetch von `eurostat-stats.json`). Die zugehö
 **täglich** und liegen im selben `stats-data`-Repo; committet wird nur bei echter Änderung — beim
 Eurostat-Widget real jeden Monat, beim Weltbank-Widget effektiv, sobald die WB neue Jahres- oder
 revidierte Werte veröffentlicht.
+
+## EZB-Wechselkurs-Widget (werktäglich, Euro gegenüber ~44 Währungen)
+
+`ezb-wechselkurs-widget.py` → `_ezb-wechselkurs-widget.qmd` (erste Nutzung: wg13iw BPE 22,
+`wechselkurs-widget.qmd`) folgt demselben Muster: gebackene Monatsreihen ab 1999 + letzter Tageskurs
+als Fallback, dazu ein asynchroner Abruf von `ezb-wechselkurse.json` (`cache:"no-store"`), der die Daten
+nur ersetzt, wenn die JSON **neuer** ist als der gebackene Stand. Die Action
+`refresh-ezb-wechselkurse.yml` läuft **werktags 16:30 UTC** (nach der EZB-Veröffentlichung gegen
+16:00 MEZ) und zusätzlich direkt nach einem Push von Skript oder Workflow — die erste Befüllung braucht
+also keinen manuellen Start. Das Skript steht in `GITHUB_STATS_REPO` auf `stats-data` und wird von
+`python _assets/push-data-repos.py --repo stats` mit hochgeladen. Die JSON ist sprachneutral (nur
+Zahlen); Namen und Texte bleiben gebacken, deshalb funktioniert sie für deutsche und englische BPEs.

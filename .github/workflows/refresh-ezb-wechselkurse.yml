@@ -1,0 +1,41 @@
+# GitHub-Action fuer das Daten-Repo "stats-data" — WERKTAEGLICHER Refresh der EZB-Euro-Referenzkurse.
+# Liegt in `.github/workflows/refresh-ezb-wechselkurse.yml` des Daten-Repos. Die EZB veroeffentlicht die
+# Referenzkurse an TARGET-Arbeitstagen gegen 16:00 MEZ -> Cron werktags 16:30 UTC (im Sommer 17:30 MESZ,
+# also immer danach). Committet `ezb-wechselkurse.json` nur bei echter Aenderung; das Wechselkurs-Widget
+# (ezb-wechselkurs-widget.py) holt sie clientseitig (cache:"no-store") mit gebackenem Fallback.
+# Laeuft zusaetzlich direkt nach einem Push des Skripts/Workflows (erste Befuellung ohne Handarbeit).
+# S. _assets/stats-github/README.md.
+name: refresh-ezb-wechselkurse
+on:
+  schedule:
+    - cron: "30 16 * * 1-5"
+  workflow_dispatch: {}
+  push:
+    paths:
+      - ezb-wechselkurs-widget.py
+      - .github/workflows/refresh-ezb-wechselkurse.yml
+permissions:
+  contents: write
+concurrency:
+  group: stats-data-push
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # ezb-wechselkurs-widget.py liegt (als Kopie) im Daten-Repo — s. README, Schritt 2.
+      - name: EZB-Wechselkurse backen
+        run: python ezb-wechselkurs-widget.py --emit-json ezb-wechselkurse.json
+      - name: Committen, falls geaendert
+        run: |
+          git config user.name  "stats-bot"
+          git config user.email "stats-bot@users.noreply.github.com"
+          git add ezb-wechselkurse.json
+          git diff --cached --quiet && exit 0
+          git commit -m "auto: EZB-Wechselkurse aktualisiert (werktaeglich)"
+          git pull --rebase
+          git push
